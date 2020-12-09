@@ -10,16 +10,16 @@ fn main() {
         .find(|&pos| {
             msg[pos - 25..pos]
                 .iter()
-                .combinations(2)
-                .all(|a| a[0] + a[1] != msg[pos])
+                .tuple_combinations()
+                .all(|(a, b)| a + b != msg[pos])
         })
         .unwrap();
     let invalid = msg[pos];
     dbg!(invalid);
-    let range = (0..pos)
-        .combinations(2)
-        .find(|a| msg[a[0]..=a[1]].iter().sum::<usize>() == invalid)
+    let (a, b) = (0..pos)
+        .tuple_combinations()
+        .find(|&(a, b)| msg[a..=b].iter().sum::<usize>() == invalid)
         .unwrap();
-    let range = &msg[range[0]..=range[1]];
+    let range = &msg[a..=b];
     dbg!(range.iter().min().unwrap() + range.iter().max().unwrap());
 }
