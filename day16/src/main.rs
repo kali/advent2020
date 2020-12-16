@@ -4,9 +4,9 @@ fn main() {
 }
 
 fn run(input: &str) {
-    let fields: Vec<(String, Vec<(usize, usize)>)> = input
-        .split("\n\n")
-        .nth(0)
+    let mut stance = input.split("\n\n");
+    let fields: Vec<(String, Vec<(usize, usize)>)> = stance
+        .next()
         .unwrap()
         .lines()
         .map(|l| {
@@ -24,15 +24,14 @@ fn run(input: &str) {
             (klass.to_string(), ranges)
         })
         .collect();
-    let tickets: Vec<Vec<usize>> = input
-        .split("\n\n")
-        .nth(2)
-        .unwrap()
-        .split(['\n'].as_ref())
-        .skip(1)
-        .filter(|s| s.len() > 0)
-        .map(|s| s.split(",").map(|s| s.parse::<usize>().unwrap()).collect())
-        .collect();
+    let mut tickets = stance.map(|it| {
+        it.trim().lines()
+            .skip(1)
+            .map(|s| s.split(",").map(|s| s.parse::<usize>().unwrap()).collect())
+            .collect::<Vec<Vec<usize>>>()
+    });
+    let mine: Vec<usize> = tickets.next().unwrap().remove(0);
+    let tickets: Vec<Vec<usize>> = tickets.next().unwrap();
     let p1 = tickets
         .iter()
         .flatten()
@@ -44,7 +43,7 @@ fn run(input: &str) {
         })
         .sum::<usize>();
     dbg!(p1);
-    let valid: Vec<&[usize]> = tickets
+    let valid_tickets: Vec<&[usize]> = tickets
         .iter()
         .map(|v| &**v)
         .filter(|t| {
@@ -63,7 +62,7 @@ fn run(input: &str) {
                 name,
                 (0..fields_len)
                     .filter(|&i| {
-                        valid
+                        valid_tickets
                             .iter()
                             .all(|t| ranges.iter().any(|r| r.0 <= t[i] && t[i] <= r.1))
                     })
@@ -71,20 +70,10 @@ fn run(input: &str) {
             )
         })
         .collect();
-    let valid: Vec<usize> = input
-        .split("\n\n")
-        .nth(1)
-        .unwrap()
-        .lines()
-        .nth(1)
-        .unwrap()
-        .split(",")
-        .map(|s| s.parse::<usize>().unwrap())
-        .collect();
     let solution = locate_fields(&mut vec![None; fields_len], &fields).unwrap();
     let p2 = (0..fields_len)
         .filter(|f| fields[*f].0.starts_with("departure "))
-        .map(|f| valid[solution.iter().position(|p| *p == f).unwrap()])
+        .map(|f| mine[solution.iter().position(|p| *p == f).unwrap()])
         .product::<usize>();
     dbg!(p2);
 }
