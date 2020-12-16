@@ -1,0 +1,6 @@
+[package]
+authors = ["Mathieu Poumeyrol <kali@zoy.org>"]
+edition = "2018"
+name = "day16"
+version = "0.1.0"
+
