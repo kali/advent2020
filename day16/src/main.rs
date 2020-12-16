@@ -81,31 +81,43 @@ fn run(input: &str) {
         .split(",")
         .map(|s| s.parse::<usize>().unwrap())
         .collect();
-    let solution = locate_fields(&mut vec![], &fields).unwrap();
+    let solution = locate_fields(&mut vec![None; fields_len], &fields).unwrap();
     let p2 = (0..fields_len)
         .filter(|f| fields[*f].0.starts_with("departure "))
-        .map(|f| valid[solution[f]])
+        .map(|f| valid[solution.iter().position(|p| *p == f).unwrap()])
         .product::<usize>();
     dbg!(p2);
 }
 
-fn locate_fields(fixed: &mut Vec<usize>, fields: &[(String, Vec<usize>)]) -> Option<Vec<usize>> {
-    if fixed.len() == fields.len() {
-        return Some(fixed.clone());
+fn locate_fields(
+    fixed: &mut [Option<usize>],
+    fields: &[(String, Vec<usize>)],
+) -> Option<Vec<usize>> {
+    if let Some(done) = fixed.iter().copied().collect() {
+        return Some(done);
     }
-    let locating = &fields[fixed.len()];
+    let locating_ix = fields
+        .iter()
+        .enumerate()
+        .filter(|(ix, _)| !fixed.contains(&Some(*ix)))
+        .min_by_key(|(_, (_, locations))| {
+            locations
+                .iter()
+                .filter(|loc| !fixed.contains(&Some(**loc)))
+                .count()
+        })
+        .unwrap()
+        .0;
+    let locating = &fields[locating_ix];
     for place in locating.1.iter() {
-        if fixed.contains(&place) {
+        if fixed[*place].is_some() {
             continue;
         }
-        fixed.push(*place);
-        if fixed.len() < 3 {
-            eprintln!("{:?}", fixed);
-        }
+        fixed[*place] = Some(locating_ix);
         if let Some(r) = locate_fields(fixed, fields) {
             return Some(r);
         }
-        fixed.pop();
+        fixed[*place] = None;
     }
     None
 }
