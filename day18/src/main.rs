@@ -1,24 +1,36 @@
 use nom::branch::alt;
-use nom::character::complete::char as cchar;
-use nom::character::complete::digit1;
-use nom::character::complete::multispace0;
-use nom::combinator::map;
-use nom::combinator::map_res;
-use nom::error::ParseError;
-use nom::multi::separated_list1;
-use nom::sequence::delimited;
-use nom::sequence::pair;
+use nom::character::complete::{char as cchar, digit1, multispace0};
+use nom::combinator::{map, map_res};
+use nom::multi::{fold_many0, separated_list1};
+use nom::sequence::{delimited, pair};
 use nom::IResult;
 
 fn main() {
     let lines = std::fs::read_to_string("input").unwrap();
-    let p1 = lines.lines().map(|l| expr1(l).unwrap().1).sum::<isize>();
-    dbg!(p1);
-    let p2 = lines.lines().map(|l| expr2(l).unwrap().1).sum::<isize>();
-    dbg!(p2);
+    dbg!(lines.lines().map(|l| expr1(l).unwrap().1).sum::<isize>());
+    dbg!(lines.lines().map(|l| expr2(l).unwrap().1).sum::<isize>());
 }
 
-fn token<E>(input: &str, e: E) -> IResult<&str, isize>
+fn expr1(input: &str) -> IResult<&str, isize> {
+    let (i, init) = atom(input, expr1)?;
+    fold_many0(
+        pair(alt((cchar('+'), cchar('*'))), |i| atom(i, expr1)),
+        init,
+        |acc, (op, v)| if op == '*' { acc * v } else { acc + v },
+    )(i)
+}
+
+fn expr2(input: &str) -> IResult<&str, isize> {
+    fn sum(input: &str) -> IResult<&str, isize> {
+        map(separated_list1(cchar('+'), |i| atom(i, expr2)), |vs| {
+            vs.iter().sum()
+        })(input)
+    }
+
+    map(separated_list1(cchar('*'), sum), |vs| vs.iter().product())(input)
+}
+
+fn atom<E>(input: &str, e: E) -> IResult<&str, isize>
 where
     E: for<'a> FnMut(&'a str) -> IResult<&'a str, isize>,
 {
@@ -28,34 +40,9 @@ where
     ))(input)
 }
 
-fn ws<'a, F: 'a, O, E: ParseError<&'a str>>(
-    inner: F,
-) -> impl FnMut(&'a str) -> IResult<&'a str, O, E>
+fn ws<'a, F: 'a, O>(inner: F) -> impl FnMut(&'a str) -> IResult<&'a str, O>
 where
-    F: FnMut(&'a str) -> IResult<&'a str, O, E>,
+    F: FnMut(&'a str) -> IResult<&'a str, O>,
 {
     delimited(multispace0, inner, multispace0)
-}
-
-fn expr1(input: &str) -> IResult<&str, isize> {
-    let (i, init) = token(input, expr1)?;
-    nom::multi::fold_many0(
-        pair(ws(alt((cchar('+'), cchar('*')))), |i| token(i, expr1)),
-        init,
-        |acc, (op, v)| match op {
-            '+' => acc + v,
-            '*' => acc * v,
-            _ => panic!(),
-        },
-    )(i)
-}
-
-fn expr2(input: &str) -> IResult<&str, isize> {
-    map(separated_list1(cchar('*'), sum), |vs| vs.iter().product())(input)
-}
-
-fn sum(input: &str) -> IResult<&str, isize> {
-    map(separated_list1(cchar('+'), |i| token(i, expr2)), |vs| {
-        vs.iter().sum()
-    })(input)
 }
