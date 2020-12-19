@@ -17,8 +17,8 @@ fn main() {
     parser2
         .0
         .insert(11, Rule::Alt(vec![vec![42, 31], vec![42, 11, 31]]));
-    let p1 = msgs.iter().filter(|m| parser2.valid(m)).count();
-    dbg!(p1);
+    let p2 = msgs.iter().filter(|m| parser2.valid(m)).count();
+    dbg!(p2);
 }
 
 #[derive(Clone, Debug)]
