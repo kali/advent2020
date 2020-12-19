@@ -9,15 +9,12 @@ use std::collections::HashMap;
 
 fn main() {
     let text = std::fs::read_to_string("input").unwrap();
-    let (parser, msgs) = all_consuming(input)(&*text).unwrap().1;
+    let (mut parser, msgs) = all_consuming(input)(&*text).unwrap().1;
     let p1 = msgs.iter().filter(|m| parser.valid(m)).count();
     dbg!(p1);
-    let mut parser2 = parser.clone();
-    parser2.0.insert(8, Rule::Alt(vec![vec![42], vec![42, 8]]));
-    parser2
-        .0
-        .insert(11, Rule::Alt(vec![vec![42, 31], vec![42, 11, 31]]));
-    let p2 = msgs.iter().filter(|m| parser2.valid(m)).count();
+    parser.0.insert(8, rule("42 | 42 8").unwrap().1);
+    parser.0.insert(11, rule("42 31 | 42 11 31").unwrap().1);
+    let p2 = msgs.iter().filter(|m| parser.valid(m)).count();
     dbg!(p2);
 }
 
