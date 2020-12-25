@@ -5,5 +5,3 @@ name = "day23"
 version = "0.1.0"
 
 [dependencies]
-bloom = "0.3.2"
-itertools = "0.9.0"
